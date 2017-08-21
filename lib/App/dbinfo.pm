@@ -181,14 +181,55 @@ $SPEC{dump_table} = {
             }],
             cmdline_aliases => {c=>{}},
         },
+        wheres => {
+            summary => 'Add WHERE clause',
+            'x.name.is_plural' => 1,
+            'x.name.singular' => 'where',
+            schema => ['array*', {
+                of=>'str*',
+            }],
+            cmdline_aliases => {w=>{}},
+        },
+        limit_number => {
+            schema => 'nonnegint*',
+            cmdline_aliases => {n=>{}},
+        },
+        limit_offset => {
+            schema => 'nonnegint*',
+            cmdline_aliases => {o=>{}},
+        },
     },
     args_rels => {
         %args_rels_common,
     },
     result => {
         schema => 'str*',
-        stream => 1,
     },
+    examples => [
+        {
+            argv => [qw/table1/],
+            test => 0,
+            'x.doc.show_result' => 0,
+        },
+        {
+            summary => 'Only include specified columns',
+            argv => [qw/table2 -c col1 -c col2/],
+            test => 0,
+            'x.doc.show_result' => 0,
+        },
+        {
+            summary => 'Exclude some columns',
+            argv => [qw/table3 -C col1 -C col2/],
+            test => 0,
+            'x.doc.show_result' => 0,
+        },
+        {
+            summary => 'Select some rows',
+            argv => ['table4', '-w', q(name LIKE 'John*'), '-n', 10],
+            test => 0,
+            'x.doc.show_result' => 0,
+        },
+    ],
 };
 sub dump_table {
     require DBIx::Diff::Schema;
@@ -196,6 +237,9 @@ sub dump_table {
     my %args = @_;
     my $table = $args{table};
     my $is_hash = $args{row_format} eq 'array' ? 0:1;
+
+    # let's ignore schema for now
+    $table =~ s/.+\.//;
 
     $is_hash++ if $args{exclude_columns} && @{$args{exclude_columns}};
 
@@ -206,7 +250,18 @@ sub dump_table {
 
     my $dbh = _connect(\%args);
 
-    my $sth = $dbh->prepare("SELECT $col_term FROM \"$table\"");
+    my $wheres = $args{wheres};
+    my $sql = join(
+        "",
+        "SELECT $col_term FROM \"$table\"",
+        ($args{wheres} && @{$args{wheres}} ?
+             " WHERE ".join(" AND ", @{$args{wheres}}) : ""),
+        # XXX what about database that don't support LIMIT clause?
+        (defined $args{limit_offset} ? " LIMIT $args{limit_offset},".($args{limit_number} // "-1") :
+             defined $args{limit_number} ? " LIMIT $args{limit_number}" : ""),
+    );
+
+    my $sth = $dbh->prepare($sql);
     $sth->execute;
 
     my $code_get_row = sub {
@@ -226,7 +281,7 @@ sub dump_table {
         __json_encode($row);
     };
 
-    [200, "OK", $code_get_row];
+    [200, "OK", $code_get_row, {stream=>1}];
 }
 
 
