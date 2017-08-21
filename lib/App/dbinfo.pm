@@ -134,7 +134,15 @@ sub list_columns {
 
     my $dbh = _connect(\%args);
 
-    # XXX check table exists
+    my $ltres = list_tables(%args);
+    return [500, "Can't list tables: $ltres->[0] - $ltres->[1]"]
+        unless $ltres->[0] == 200;
+    my $tables = $ltres->[2];
+    #my $tables_wo_schema = [map {my $n=$_; $n=~s/.+\.//; $n} @$tables];
+    #return [404, "No such table '$args{table}'"]
+    #    unless grep { $args{table} eq $_ } (@$tables, @$tables_wo_schema);
+    return [404, "No such table '$args{table}'"]
+        unless grep { $args{table} eq $_ } @$tables;
 
     my @cols = DBIx::Diff::Schema::_list_columns($dbh, $args{table});
     @cols = map { $_->{COLUMN_NAME} } @cols unless $args{detail};
