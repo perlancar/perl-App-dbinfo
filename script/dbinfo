@@ -13,7 +13,32 @@ Perinci::CmdLine::Any->new(
         'list-columns' => {url => '/App/dbinfo/list_columns'},
         'dump-table'   => {url => '/App/dbinfo/dump_table'},
     },
+    log => 1,
+    log_level => 'info',
 )->run;
 
 # ABSTRACT:
 # PODNAME:
+
+=head1 SYNOPSIS
+
+List tables:
+
+ % dbinfo list-tables mydb
+
+List columns of a table:
+
+ % dbinfo list-columns mydb mytable
+ % dbinfo list-columns -l mydb mytable   ; # show detail
+
+Dump a table into various format:
+
+ % dbinfo dump-table mydb mytable
+
+
+=head1 DESCRIPTION
+
+
+=head1 SEE ALSO
+
+L<mysqlinfo> from L<App::mysqlinfo>

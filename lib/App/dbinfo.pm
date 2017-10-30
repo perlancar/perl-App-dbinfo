@@ -15,7 +15,7 @@ $SPEC{':package'} = {
     summary => 'Get/extract information from database',
 };
 
-my %args_common = (
+our %args_common = (
     dsn => {
         summary => 'DBI data source, '.
             'e.g. "dbi:SQLite:dbname=/path/to/db.db"',
@@ -46,13 +46,13 @@ _
     },
 );
 
-my %args_rels_common = (
+our %args_rels_common = (
     'req_one&' => [
         [qw/dsn dbh/],
     ],
 );
 
-my %arg_table = (
+our %arg_table = (
     table => {
         summary => 'Table name',
         schema => 'str*',
@@ -61,7 +61,7 @@ my %arg_table = (
     },
 );
 
-my %arg_detail = (
+our %arg_detail = (
     detail => {
         summary => 'Show detailed information per record',
         schema => 'bool*',
@@ -149,55 +149,59 @@ sub list_columns {
     return [200, "OK", \@cols];
 }
 
+our %args_dump_table = (
+    row_format => {
+        schema => ['str*', in=>['array', 'hash']],
+        default => 'hash',
+        cmdline_aliases => {
+            array => { summary => 'Shortcut for --row-format=array', is_flag=>1, code => sub { $_[0]{row_format} = 'array' } },
+            a     => { summary => 'Shortcut for --row-format=array', is_flag=>1, code => sub { $_[0]{row_format} = 'array' } },
+        },
+    },
+    exclude_columns => {
+        'x.name.is_plural' => 1,
+        'x.name.singular' => 'exclude_column',
+        schema => ['array*', {
+            of=>'str*',
+            #'x.perl.coerce_rules'=>['str_comma_sep'],
+        }],
+        cmdline_aliases => {C=>{}},
+    },
+    include_columns => {
+        'x.name.is_plural' => 1,
+        'x.name.singular' => 'include_column',
+        schema => ['array*', {
+            of=>'str*',
+            #'x.perl.coerce_rules'=>['str_comma_sep'],
+        }],
+        cmdline_aliases => {c=>{}},
+    },
+    wheres => {
+        summary => 'Add WHERE clause',
+        'x.name.is_plural' => 1,
+        'x.name.singular' => 'where',
+        schema => ['array*', {
+            of=>'str*',
+        }],
+        cmdline_aliases => {w=>{}},
+    },
+    limit_number => {
+        schema => 'nonnegint*',
+        cmdline_aliases => {n=>{}},
+    },
+    limit_offset => {
+        schema => 'nonnegint*',
+        cmdline_aliases => {o=>{}},
+    },
+);
+
 $SPEC{dump_table} = {
     v => 1.1,
     summary => 'Dump table into various formats',
     args => {
         %args_common,
         %arg_table,
-        row_format => {
-            schema => ['str*', in=>['array', 'hash']],
-            default => 'hash',
-            cmdline_aliases => {
-                array => { summary => 'Shortcut for --row-format=array', is_flag=>1, code => sub { $_[0]{row_format} = 'array' } },
-                a     => { summary => 'Shortcut for --row-format=array', is_flag=>1, code => sub { $_[0]{row_format} = 'array' } },
-            },
-        },
-        exclude_columns => {
-            'x.name.is_plural' => 1,
-            'x.name.singular' => 'exclude_column',
-            schema => ['array*', {
-                of=>'str*',
-                #'x.perl.coerce_rules'=>['str_comma_sep'],
-            }],
-            cmdline_aliases => {C=>{}},
-        },
-        include_columns => {
-            'x.name.is_plural' => 1,
-            'x.name.singular' => 'include_column',
-            schema => ['array*', {
-                of=>'str*',
-                #'x.perl.coerce_rules'=>['str_comma_sep'],
-            }],
-            cmdline_aliases => {c=>{}},
-        },
-        wheres => {
-            summary => 'Add WHERE clause',
-            'x.name.is_plural' => 1,
-            'x.name.singular' => 'where',
-            schema => ['array*', {
-                of=>'str*',
-            }],
-            cmdline_aliases => {w=>{}},
-        },
-        limit_number => {
-            schema => 'nonnegint*',
-            cmdline_aliases => {n=>{}},
-        },
-        limit_offset => {
-            schema => 'nonnegint*',
-            cmdline_aliases => {o=>{}},
-        },
+        %args_dump_table,
     },
     args_rels => {
         %args_rels_common,
@@ -243,17 +247,17 @@ sub dump_table {
 
     $is_hash++ if $args{exclude_columns} && @{$args{exclude_columns}};
 
+    my $dbh = _connect(\%args);
+
     my $col_term = "*";
     if ($args{include_columns} && @{$args{include_columns}}) {
-        $col_term = join(",", map {qq("$_")} @{$args{include_columns}});
+        $col_term = join(",", map {$dbh->quote_identifier($_)} @{$args{include_columns}});
     }
-
-    my $dbh = _connect(\%args);
 
     my $wheres = $args{wheres};
     my $sql = join(
         "",
-        "SELECT $col_term FROM \"$table\"",
+        "SELECT $col_term FROM ", $dbh->quote_identifier($table),
         ($args{wheres} && @{$args{wheres}} ?
              " WHERE ".join(" AND ", @{$args{wheres}}) : ""),
         # XXX what about database that don't support LIMIT clause?
