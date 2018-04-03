@@ -186,11 +186,11 @@ our %args_dump_table = (
         cmdline_aliases => {w=>{}},
     },
     limit_number => {
-        schema => 'nonnegint*',
+        schema => 'uint*',
         cmdline_aliases => {n=>{}},
     },
     limit_offset => {
-        schema => 'nonnegint*',
+        schema => 'uint*',
         cmdline_aliases => {o=>{}},
     },
 );
