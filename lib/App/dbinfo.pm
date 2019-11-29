@@ -1,6 +1,8 @@
 package App::dbinfo;
 
+# AUTHORITY
 # DATE
+# DIST
 # VERSION
 
 use 5.010001;
@@ -163,7 +165,7 @@ our %args_dump_table = (
         'x.name.singular' => 'exclude_column',
         schema => ['array*', {
             of=>'str*',
-            #'x.perl.coerce_rules'=>['str_comma_sep'],
+            #'x.perl.coerce_rules'=>['From_str::comma_sep'],
         }],
         cmdline_aliases => {C=>{}},
     },
@@ -172,7 +174,7 @@ our %args_dump_table = (
         'x.name.singular' => 'include_column',
         schema => ['array*', {
             of=>'str*',
-            #'x.perl.coerce_rules'=>['str_comma_sep'],
+            #'x.perl.coerce_rules'=>['From_str::comma_sep'],
         }],
         cmdline_aliases => {c=>{}},
     },
