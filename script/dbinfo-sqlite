@@ -1,0 +1,46 @@
+#!perl
+
+use 5.010001;
+use strict;
+use warnings;
+
+use Perinci::CmdLine::Any;
+
+Perinci::CmdLine::Any->new(
+    url => '/App/dbinfo/',
+    subcommands => {
+        'list-tables'  => {url => '/App/dbinfo/list_sqlite_tables'},
+        'list-columns' => {url => '/App/dbinfo/list_sqlite_columns'},
+        'dump-table'   => {url => '/App/dbinfo/dump_sqlite_table'},
+    },
+    log => 1,
+    log_level => 'info',
+)->run;
+
+# ABSTRACT:
+# PODNAME:
+
+=head1 SYNOPSIS
+
+List SQLite tables:
+
+ % dbinfo-sqlite list-tables mydata.db
+
+List columns of a table:
+
+ % dbinfo-sqlite list-columns mydata.db mytable
+ % dbinfo-sqlite list-columns mydata.db mytable -l  ;# show detail
+
+Dump a table into various format:
+
+ % dbinfo-sqlite dump-table mydata.db mytable
+
+
+=head1 DESCRIPTION
+
+
+=head1 SEE ALSO
+
+L<dbinfo-sqlite>, ...
+
+L<mysqlinfo> from L<App::mysqlinfo>

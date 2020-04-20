@@ -17,7 +17,7 @@ $SPEC{':package'} = {
     summary => 'Get/extract information from database',
 };
 
-our %args_common = (
+our %args_common_dbi = (
     dsn => {
         summary => 'DBI data source, '.
             'e.g. "dbi:SQLite:dbname=/path/to/db.db"',
@@ -45,6 +45,14 @@ _
         summary => 'Alternative to specifying dsn/user/password (from Perl)',
         schema => 'obj*',
         tags => ['connection', 'common', 'hidden-cli'],
+    },
+);
+
+our %args_common_sqlite = (
+    dbpath => {
+        schema => 'filename*',
+        tags => ['connection', 'common'],
+        pos => 0,
     },
 );
 
@@ -93,7 +101,8 @@ $SPEC{list_tables} = {
     v => 1.1,
     summary => 'List tables in the database',
     args => {
-        %args_common,
+        %args_common_dbi,
+        # XXX detail
     },
     args_rels => {
         %args_rels_common,
@@ -107,14 +116,32 @@ sub list_tables {
     my $dbh = _connect(\%args);
 
     return [200, "OK", [
-            DBIx::Diff::Schema::_list_tables($dbh)]];
+            DBIx::Diff::Schema::list_tables($dbh)]];
+}
+
+$SPEC{list_sqlite_tables} = {
+    v => 1.1,
+    summary => 'List tables in the SQLite database',
+    args => {
+        %args_common_sqlite,
+    },
+    args_rels => {
+    },
+};
+sub list_sqlite_tables {
+    my %args = @_;
+    my $dsn; $dsn = "dbi:SQLite:dbname=".delete($args{dbpath}) if defined $args{dbpath};
+    list_tables(
+        dsn => $dsn,
+        %args
+    );
 }
 
 $SPEC{list_columns} = {
     v => 1.1,
     summary => 'List columns of a table',
     args => {
-        %args_common,
+        %args_common_dbi,
         %arg_table,
         %arg_detail,
     },
@@ -146,9 +173,36 @@ sub list_columns {
     return [404, "No such table '$args{table}'"]
         unless grep { $args{table} eq $_ } @$tables;
 
-    my @cols = DBIx::Diff::Schema::_list_columns($dbh, $args{table});
+    my @cols = DBIx::Diff::Schema::list_columns($dbh, $args{table});
     @cols = map { $_->{COLUMN_NAME} } @cols unless $args{detail};
     return [200, "OK", \@cols];
+}
+
+$SPEC{list_sqlite_columns} = {
+    v => 1.1,
+    summary => 'List columns of a SQLite database table',
+    args => {
+        %args_common_sqlite,
+        %arg_table,
+        %arg_detail,
+    },
+    args_rels => {
+    },
+    examples => [
+        {
+            args => {dbpath=>'/tmp/test.db', table=>'main.table1'},
+            test => 0,
+            'x.doc.show_result' => 0,
+        },
+    ],
+};
+sub list_sqlite_columns {
+    my %args = @_;
+    my $dsn; $dsn = "dbi:SQLite:dbname=".delete($args{dbpath}) if defined $args{dbpath};
+    list_columns(
+        dsn => $dsn,
+        %args
+    );
 }
 
 our %args_dump_table = (
@@ -201,7 +255,7 @@ $SPEC{dump_table} = {
     v => 1.1,
     summary => 'Dump table into various formats',
     args => {
-        %args_common,
+        %args_common_dbi,
         %arg_table,
         %args_dump_table,
     },
@@ -290,17 +344,41 @@ sub dump_table {
     [200, "OK", $code_get_row, {stream=>1}];
 }
 
+$SPEC{dump_sqlite_table} = {
+    v => 1.1,
+    summary => 'Dump SQLite table into various formats',
+    args => {
+        %args_common_sqlite,
+        %arg_table,
+        %args_dump_table,
+    },
+    args_rels => {
+    },
+    result => {
+        schema => 'str*',
+    },
+    examples => [
+    ],
+};
+sub dump_sqlite_table {
+    my %args = @_;
+    my $dsn; $dsn = "dbi:SQLite:dbname=".delete($args{dbpath}) if defined $args{dbpath};
+    dump_table(
+        dsn => $dsn,
+        %args
+    );
+}
 
 1;
 #ABSTRACT:
 
 =head1 SYNOPSIS
 
-See included script L<dbinfo>.
+See included scripts L<dbinfo>, L<dbinfo-sqlite>, ...
 
 
 =head1 SEE ALSO
 
 L<DBI>
 
-L<App::diffdb>
+L<diffdb>, L<diffdb-sqlite>, ... (from L<App::diffdb>)

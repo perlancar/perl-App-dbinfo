@@ -41,4 +41,6 @@ Dump a table into various format:
 
 =head1 SEE ALSO
 
+L<dbinfo-sqlite>, ...
+
 L<mysqlinfo> from L<App::mysqlinfo>
