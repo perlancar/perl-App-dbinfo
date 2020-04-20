@@ -71,6 +71,14 @@ our %arg_table = (
     },
 );
 
+our %arg1opt_table = (
+    table => {
+        summary => 'Table name',
+        schema => 'str*',
+        pos => 1,
+    },
+);
+
 our %arg_detail = (
     detail => {
         summary => 'Show detailed information per record',
@@ -366,6 +374,46 @@ sub dump_sqlite_table {
     dump_table(
         dsn => $dsn,
         %args
+    );
+}
+
+$SPEC{list_indexes} = {
+    v => 1.1,
+    summary => 'List database indexes',
+    args => {
+        %args_common_dbi,
+        %arg1opt_table,
+    },
+    args_rels => {
+        %args_rels_common,
+    },
+};
+sub list_indexes {
+    require DBIx::Diff::Schema;
+
+    my %args = @_;
+
+    my $dbh = _connect(\%args);
+
+    [200, "OK", DBIx::Diff::Schema::list_table_indexes($dbh, $args{table})];
+}
+
+$SPEC{list_sqlite_indexes} = {
+    v => 1.1,
+    summary => 'List SQLite table indexes',
+    args => {
+        %args_common_sqlite,
+        %arg1opt_table,
+    },
+    args_rels => {
+    },
+};
+sub list_sqlite_indexes {
+    my %args = @_;
+    my $dsn; $dsn = "dbi:SQLite:dbname=".delete($args{dbpath}) if defined $args{dbpath};
+    list_indexes(
+        dsn => $dsn,
+        %args,
     );
 }
 

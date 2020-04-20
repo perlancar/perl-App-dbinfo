@@ -11,6 +11,7 @@ Perinci::CmdLine::Any->new(
     subcommands => {
         'list-tables'  => {url => '/App/dbinfo/list_tables'},
         'list-columns' => {url => '/App/dbinfo/list_columns'},
+        'list-indexes' => {url => '/App/dbinfo/list_indexes'},
         'dump-table'   => {url => '/App/dbinfo/dump_table'},
     },
     log => 1,
