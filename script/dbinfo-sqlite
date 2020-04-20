@@ -8,6 +8,7 @@ use Perinci::CmdLine::Any;
 
 Perinci::CmdLine::Any->new(
     url => '/App/dbinfo/',
+    summary => 'Get/extract information from SQLite database',
     subcommands => {
         'list-tables'  => {url => '/App/dbinfo/list_sqlite_tables'},
         'list-columns' => {url => '/App/dbinfo/list_sqlite_columns'},
