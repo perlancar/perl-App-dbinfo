@@ -117,14 +117,14 @@ $SPEC{list_tables} = {
     },
 };
 sub list_tables {
-    require DBIx::Diff::Schema;
+    require DBIx::Util::Schema;
 
     my %args = @_;
 
     my $dbh = _connect(\%args);
 
     return [200, "OK", [
-            DBIx::Diff::Schema::list_tables($dbh)]];
+            DBIx::Util::Schema::list_tables($dbh)]];
 }
 
 $SPEC{list_sqlite_tables} = {
@@ -165,7 +165,7 @@ $SPEC{list_columns} = {
     ],
 };
 sub list_columns {
-    require DBIx::Diff::Schema;
+    require DBIx::Util::Schema;
 
     my %args = @_;
 
@@ -181,7 +181,7 @@ sub list_columns {
     return [404, "No such table '$args{table}'"]
         unless grep { $args{table} eq $_ } @$tables;
 
-    my @cols = DBIx::Diff::Schema::list_columns($dbh, $args{table});
+    my @cols = DBIx::Util::Schema::list_columns($dbh, $args{table});
     @cols = map { $_->{COLUMN_NAME} } @cols unless $args{detail};
     return [200, "OK", \@cols];
 }
@@ -300,8 +300,6 @@ $SPEC{dump_table} = {
     ],
 };
 sub dump_table {
-    require DBIx::Diff::Schema;
-
     my %args = @_;
     my $table = $args{table};
     my $is_hash = $args{row_format} eq 'array' ? 0:1;
@@ -389,13 +387,13 @@ $SPEC{list_indexes} = {
     },
 };
 sub list_indexes {
-    require DBIx::Diff::Schema;
+    require DBIx::Util::Schema;
 
     my %args = @_;
 
     my $dbh = _connect(\%args);
 
-    [200, "OK", DBIx::Diff::Schema::list_table_indexes($dbh, $args{table})];
+    [200, "OK", DBIx::Util::Schema::list_indexes($dbh, $args{table})];
 }
 
 $SPEC{list_sqlite_indexes} = {
